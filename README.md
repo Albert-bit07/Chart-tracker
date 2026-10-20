@@ -23,7 +23,7 @@ flowchart TD
   A -->|60-second polling loop| P
 ```
 
-Source-derived illustration. The single [Python source](Project%20Stock%20reader.py) holds state in local variables. Only the first crossing triggers the entry prompt. Once triggered, later samples can repeatedly play audio; there is no cooldown for those sounds.
+Source-derived illustration. The single [Python source](Project%20Stock%20reader.py) holds state in local variables. Only the first crossing triggers the entry prompt. After entry, audio plays only when the position changes between win, lose or break-even.
 
 ## Run
 
@@ -36,7 +36,7 @@ python -m pip install yfinance pygame plyer
 python 'Project Stock reader.py'
 ```
 
-There is no dependency manifest or version lock. Keep `Win.mp3` and `Lose.mp3` in the working directory; pygame initializes audio before the prompts. Enter a ticker and numeric target, then wait for an actual crossing. After the notification, enter Buy/Sell and the entry price. Ctrl-C stops the script.
+Install dependencies with `python -m pip install -r requirements.txt`. Audio assets resolve relative to the script; audio initializes only when needed and is optional. Dependencies are not locked. Enter a ticker and numeric target, then wait for an actual crossing. After the notification, enter Buy/Sell and the entry price. Ctrl-C stops the script.
 
 ## 60-second demonstration plan
 
@@ -44,10 +44,14 @@ Show the prompts, the previous/current crossing condition in source, and the pol
 
 ## Scope and limitations
 
-There is no authentication, API, database, order execution, backtest, model, job recovery or profitability measurement. Network failures, empty price history, invalid numeric input and desktop/audio errors are not handled. A crossing can be missed between samples. The data source is external and does not establish real-time exchange latency. Restart loses state. The script blocks for input on first crossing and can repeatedly play long audio after it. It should remain a local experiment.
+There is no authentication, API, database, order execution, backtest, model, job recovery or profitability measurement. Network failures and empty/invalid quotes are logged and retried; numeric inputs are validated and desktop/audio failures are nonfatal. A crossing can be missed between samples. The data source is external and does not establish real-time exchange latency. Restart loses state. The script blocks for input on first crossing and pauses polling while collecting entry details. It should remain a local experiment.
 
 A separate [ChartTracker API](https://github.com/Albert-bit07/charttracker-api) adds an HTTP entry point and alert cooldown, with its own background-task limitations.
 
 ## Validation — 2026-10-20
 
 The Python file parsed successfully with AST. yfinance and pygame were not installed, so no provider request, desktop alert or sound playback was executed. No tests, CI workflow, benchmark or AGENTS.md was found in the checked tree. Favor the larger systems/application projects for recruiting and keep this repository as a clearly scoped learning artifact.
+
+## Regression checks
+
+`python -m unittest discover -s tests -v` passes five tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions and break-even. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
