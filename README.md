@@ -23,7 +23,7 @@ flowchart TD
   A -->|60-second polling loop| P
 ```
 
-Source-derived illustration. The single [Python source](Project%20Stock%20reader.py) holds state in local variables. Only the first crossing triggers the entry prompt. After entry, audio plays only when the position changes between win, lose or break-even.
+Source-derived illustration. The single [Python source](Project%20Stock%20reader.py) holds state in local variables. Only the first crossing triggers the entry prompt. After entry, the next successful quote fetch determines the first position result; the earlier crossing quote is not reused after potentially lengthy input prompts. Audio then plays only when the position changes between win, lose or break-even. A new fetch still returns provider-sampled data, not a guaranteed real-time price.
 
 ## Run
 
@@ -50,8 +50,8 @@ A separate [ChartTracker API](https://github.com/Albert-bit07/charttracker-api) 
 
 ## Validation — 2026-10-20
 
-The Python file parsed successfully with AST. yfinance and pygame were not installed, so no provider request, desktop alert or sound playback was executed. No tests, CI workflow, benchmark or AGENTS.md was found in the checked tree. Favor the larger systems/application projects for recruiting and keep this repository as a clearly scoped learning artifact.
+CI installs the dependencies and runs the unittest suite on Python 3.12. The tests exercise the polling loop with controlled provider, notification and audio boundaries. No live provider request, desktop alert, sound playback or benchmark result is claimed.
 
 ## Regression checks
 
-`python -m unittest discover -s tests -v` passes five tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions and break-even. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
+`python -m unittest discover -s tests -v` passes six tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions, break-even and waiting for a post-input quote before reporting a position result. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
