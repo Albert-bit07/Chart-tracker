@@ -8,6 +8,19 @@ tracker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tracker)
 
 class TrackerTests(unittest.TestCase):
+    def test_position_alert_uses_quote_fetched_after_entry_input(self):
+        # The user may spend minutes answering the entry prompts. The quote
+        # that triggered those prompts must not produce a position alert.
+        with patch.object(tracker, 'get_current_price', side_effect=[9, 11, None, 8, KeyboardInterrupt]), \
+             patch.object(tracker.time, 'sleep') as sleep, \
+             patch('builtins.input', side_effect=['buy', '10']), \
+             patch.object(tracker, 'play_result') as audio, \
+             patch('plyer.notification.notify'):
+            with self.assertRaises(KeyboardInterrupt):
+                tracker.monitor('AAPL', 10)
+        self.assertEqual([call.args[0] for call in audio.call_args_list], ['lose'])
+        self.assertEqual(sleep.call_count, 4)
+
     def test_positive_prices(self):
         for value in ['bad', 'nan', 'inf', '-1', '0']:
             with self.assertRaises(ValueError):

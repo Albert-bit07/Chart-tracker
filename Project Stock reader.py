@@ -83,7 +83,7 @@ def monitor(ticker, target):
             while side not in ('buy', 'sell'):
                 side = input('Buy or Sell: ').strip().lower()
             entry = read_price('Enter entry price: ')
-        if side is not None:
+        elif side is not None:
             result = position_result(side, current, entry)
             if result != last_result:
                 print({'win': 'In the money', 'lose': 'Out of the money', 'even': 'At entry price'}[result])
