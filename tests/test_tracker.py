@@ -1,5 +1,7 @@
 import importlib.util
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -8,6 +10,33 @@ tracker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tracker)
 
 class TrackerTests(unittest.TestCase):
+    def test_main_stops_cleanly_during_prompts_or_monitoring(self):
+        for exception in (KeyboardInterrupt, EOFError):
+            for phase in ('ticker', 'target', 'monitor'):
+                with self.subTest(exception=exception.__name__, phase=phase):
+                    inputs = [exception()] if phase == 'ticker' else ['AAPL', exception()] if phase == 'target' else ['AAPL', '10']
+                    with patch('builtins.input', side_effect=inputs), \
+                         patch.object(tracker, 'monitor', side_effect=exception()) as monitor, \
+                         patch('builtins.print') as output:
+                        try:
+                            tracker.main()
+                        except (KeyboardInterrupt, EOFError):
+                            self.fail('Normal user interruption escaped main')
+                    self.assertIn(('\nTracking stopped.',), [call.args for call in output.call_args_list])
+                    if phase == 'monitor':
+                        monitor.assert_called_once_with('AAPL', 10)
+                    else:
+                        monitor.assert_not_called()
+
+    def test_cli_eof_exits_without_traceback(self):
+        for input_text in ('', 'AAPL\n'):
+            with self.subTest(input_text=input_text):
+                result = subprocess.run([sys.executable, tracker.__file__], input=input_text,
+                    capture_output=True, text=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('Tracking stopped.', result.stdout)
+                self.assertEqual(result.stderr, '')
+
     def test_position_alert_uses_quote_fetched_after_entry_input(self):
         # The user may spend minutes answering the entry prompts. The quote
         # that triggered those prompts must not produce a position alert.

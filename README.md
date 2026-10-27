@@ -55,3 +55,5 @@ CI installs the dependencies and runs the unittest suite on Python 3.12. The tes
 ## Regression checks
 
 `python -m unittest discover -s tests -v` passes six tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions, break-even and waiting for a post-input quote before reporting a position result. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
+
+Ctrl-C or end-of-input (EOF) exits cleanly during ticker/price prompts or monitoring. Other unexpected errors are not suppressed.
