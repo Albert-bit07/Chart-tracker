@@ -94,14 +94,14 @@ def monitor(ticker, target):
 
 
 def main():
-    ticker = ''
-    while not ticker:
-        ticker = input('Enter ticker: ').strip().upper()
-    target = read_price('Insert target price: ')
-    print(f'Tracking {ticker}... waiting for price to cross {target}')
     try:
+        ticker = ''
+        while not ticker:
+            ticker = input('Enter ticker: ').strip().upper()
+        target = read_price('Insert target price: ')
+        print(f'Tracking {ticker}... waiting for price to cross {target}')
         monitor(ticker, target)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         print('\nTracking stopped.')
 
 
