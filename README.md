@@ -32,11 +32,11 @@ Use a desktop Python environment with an audio device, notification support and 
 ```bash
 python -m venv .venv
 # Activate your environment for the current shell.
-python -m pip install yfinance pygame plyer
+python -m pip install --require-hashes -r requirements.lock
 python 'Project Stock reader.py'
 ```
 
-Install dependencies with `python -m pip install -r requirements.txt`. Audio assets resolve relative to the script; audio initializes only when needed and is optional. Dependencies are not locked. Enter a ticker and numeric target, then wait for an actual crossing. After the notification, enter Buy/Sell and the entry price. Ctrl-C stops the script.
+Install dependencies with `python -m pip install --require-hashes -r requirements.lock`. Audio assets resolve relative to the script; audio initializes only when needed and is optional. The lock pins transitive versions and distribution hashes for the verified Linux/Python 3.12 environment; other platforms are unverified. Enter a ticker and numeric target, then wait for an actual crossing. After the notification, enter Buy/Sell and the entry price. Ctrl-C stops the script.
 
 ## 60-second demonstration plan
 
@@ -48,12 +48,28 @@ There is no authentication, API, database, order execution, backtest, model, job
 
 A separate [ChartTracker API](https://github.com/Albert-bit07/charttracker-api) adds an HTTP entry point and alert cooldown, with its own background-task limitations.
 
-## Validation — 2026-10-20
+## Validation — 2026-10-28
 
-CI installs the dependencies and runs the unittest suite on Python 3.12. The tests exercise the polling loop with controlled provider, notification and audio boundaries. No live provider request, desktop alert, sound playback or benchmark result is claimed.
+CI enforces the lock with `--require-hashes`, checks dependency consistency, and runs the unittest suite on Python 3.12. The tests exercise the polling loop with controlled provider, notification and audio boundaries. No live provider request, desktop alert, sound playback or benchmark result is claimed.
 
 ## Regression checks
 
-`python -m unittest discover -s tests -v` passes six tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions, break-even and waiting for a post-input quote before reporting a position result. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
+`python -m unittest discover -s tests -v` passes eight tests covering finite positive inputs, crossing boundaries, failed-quote recovery, audio state transitions, short positions, break-even, EOF/interrupt handling and waiting for a post-input quote before reporting a position result. Market data, notifications and audio are mocked. Importing the module no longer prompts or opens an audio device. No live provider or desktop E2E result is claimed.
 
 Ctrl-C or end-of-input (EOF) exits cleanly during ticker/price prompts or monitoring. Other unexpected errors are not suppressed.
+
+### Dependency updates
+
+`requirements.txt` lists direct dependency inputs; `requirements.lock` is the
+installation artifact. To deliberately update it with uv 0.13.4 on Linux:
+
+```bash
+uv pip compile requirements.txt --python-version 3.12 --generate-hashes --upgrade --output-file requirements.lock
+python -m pip install --require-hashes -r requirements.lock
+python -m pip check
+python -m unittest discover -s tests -v
+```
+
+Review the lock diff and use a fresh environment when validating upgrades.
+Hashes check artifact identity; they do not establish vulnerability freedom.
+Desktop notification/audio behavior still needs verification on the intended device.
